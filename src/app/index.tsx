@@ -1,10 +1,10 @@
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, FlatList, SafeAreaView } from 'react-native';
+import { StyleSheet, Text, View, FlatList, SafeAreaView, Button } from 'react-native';
 import { supabase } from '../lib/supabase';
 import MovieItem from '../components/MovieItem';
 import { TextInput } from 'react-native-gesture-handler';
-import { Button } from 'react-native-elements';
+
 
 export default function App() {
   const [movies, setMovies] = useState([]);
@@ -27,14 +27,28 @@ export default function App() {
     db();
   }, [])
 
-  const onPress = () => {
+  const onPress = async () => {
+    const { data } = await supabase.functions.invoke('embed', {
+      body: {
+        input: query
+      }
+    });
+
+
+    const { data: movies } = await supabase.rpc('match_movies', {
+      query_embedding: data.embedding, // Pass the embedding you want to compare
+      match_threshold: 0.78, // Choose an appropriate threshold for your data
+      match_count: 5, // Choose the number of matches
+    })
+
+    setMovies(movies)
     setQuery('')
   }
 
 
   return (
     <View style={styles.container}>
-      <SafeAreaView>
+      <SafeAreaView style={{ marginTop: 30 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <TextInput
             value={query}
@@ -43,7 +57,7 @@ export default function App() {
             placeholderTextColor={'gray'}
             style={styles.input}
           />
-          <Button>Search</Button>
+          <Button title="Search" onPress={onPress} />
         </View>
         <FlatList data={movies} renderItem={MovieItem} />
       </SafeAreaView>
@@ -64,5 +78,13 @@ const styles = StyleSheet.create({
     padding: 15,
     margin: 10,
     color: 'white'
+  },
+  btn: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: 16,
+    paddingHorizontal: 10,
+    width: 100
   }
 });

@@ -1,11 +1,13 @@
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, FlatList } from 'react-native';
 import { useEffect, useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { supabase } from "../lib/supabase"
+import MovieItem from '../components/MovieItem';
 
 const MovieDetails = () => {
     const { id } = useLocalSearchParams();
     const [movie, setMovie] = useState(null);
+    const [similarMovies, setSimilarMovies] = useState(null);
 
     useEffect(() => {
         const fetchMovie = async () => {
@@ -23,7 +25,27 @@ const MovieDetails = () => {
             }
         };
         fetchMovie();
-    }, []);
+    }, [id]);
+
+    useEffect(() => {
+        if (!movie?.embedding) {
+            return;
+        }
+
+        const fetchSimilarMovies = async () => {
+            const { data: documents } = await supabase.rpc('match_movies', {
+                query_embedding: movie.embedding, // Pass the embedding you want to compare
+                match_threshold: 0.78, // Choose an appropriate threshold for your data
+                match_count: 5, // Choose the number of matches
+            })
+
+            // console.log(documents)
+            setSimilarMovies(documents)
+        }
+
+        fetchSimilarMovies();
+
+    }, [movie?.embedding])
 
     if (!movie) {
         return <ActivityIndicator />;
@@ -36,6 +58,7 @@ const MovieDetails = () => {
             <Text style={styles.overview}>{movie.overview}</Text>
 
             <Text style={styles.similar}>Similar Movies</Text>
+            <FlatList renderItem={MovieItem} data={similarMovies} />
         </View>
     );
 };
