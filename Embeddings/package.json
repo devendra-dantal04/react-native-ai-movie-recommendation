@@ -1,0 +1,16 @@
+{
+  "name": "embeddings",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+  
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@xenova/transformers": "^2.6.2"
+  },
+  "type": "module"
+}
